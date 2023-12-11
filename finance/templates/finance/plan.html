@@ -1,0 +1,89 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}План закупок{% endblock %}
+{% block content %}
+
+<!--выбор даты-->
+  <link rel="stylesheet" href="//code.jquery.com/ui/1.13.2/themes/base/jquery-ui.css">
+  <link rel="stylesheet" href="/resources/demos/style.css">
+  <script src="https://code.jquery.com/jquery-3.6.0.js"></script>
+  <script src="https://code.jquery.com/ui/1.13.2/jquery-ui.js"></script>
+<div class="container mt-4">
+<div class="container mt-4">
+  <form id="dateFilter">
+   <p>Date: <input type="text" id="datepicker"></p>
+   <input type="submit" value="Загрузить" name="_load" class="btn btn-primary ms-2">
+  </form>
+</div>
+  <div class="row">
+    <div class="col-md-6">
+      <h2>Продадажи</h2>
+      <canvas id="daySales"></canvas>
+  </div>
+  </div>
+</div>
+
+<script>
+  $( function() {
+    $( "#datepicker" ).datepicker();
+  } );
+</script>
+<script>
+  $(document).ready(function() {
+    $.ajax({
+      url: "/finance/chart/filter-options-days/",
+      type: "GET",
+      dataType: "json",
+      success: (jsonResponse) => {
+        // Load all the options
+        jsonResponse.options.forEach(option => {
+          $("#day").append(new Option(option, option));
+        });
+        // Load data for the first option
+        loadAllCharts($("#day").children().first().val());
+      },
+      error: () => console.log("Failed to fetch chart filter options!")
+    });
+  });
+
+  $("#dateFilter").on("submit", (event) => {
+    event.preventDefault();
+
+    const day = $("#day").val();
+    loadAllCharts(year)
+  });
+
+  function loadChart(chart, endpoint) {
+    $.ajax({
+      url: endpoint,
+      type: "GET",
+      dataType: "json",
+      success: (jsonResponse) => {
+        // Extract data from the response
+        const title = jsonResponse.title;
+        const labels = jsonResponse.data.labels;
+        const datasets = jsonResponse.data.datasets;
+
+        // Reset the current chart
+        chart.data.datasets = [];
+        chart.data.labels = [];
+
+        // Load new data into the chart
+        chart.options.title.text = title;
+        chart.options.title.display = true;
+        chart.data.labels = labels;
+        datasets.forEach(dataset => {
+          chart.data.datasets.push(dataset);
+        });
+        chart.update();
+      },
+      error: () => console.log("Failed to fetch chart data from " + endpoint + "!")
+    });
+  }
+
+  function loadAllCharts(year) {
+    loadChart(salesChart, `/finance/chart/sales/${year}/`);
+  }
+</script>
+
+{% endblock %}

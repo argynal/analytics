@@ -1,0 +1,55 @@
+<!--<div class="pagination">-->
+<!--  <span class="step-links">-->
+<!--    {% if page.has_previous %}-->
+<!--      <a href="?page={{ page.previous_page_number }}">Пред.</a>-->
+<!--    {% endif %}-->
+<!--    <span class="current">-->
+<!--      Стр. {{ page.number }} из {{ page.paginator.num_pages }}.-->
+<!--    </span>-->
+<!--    {% if page.has_next %}-->
+<!--      <a href="?page={{ page.next_page_number }}">След.</a>-->
+<!--    {% endif %}-->
+<!--  </span>-->
+<!--</div>-->
+
+<style>
+  .pagination-dark .page-link {
+    color: #ffffff; /* Цвет текста ссылок */
+    background-color: #343a40; /* Цвет фона активной страницы */
+    border-color: #343a40; /* Цвет границы активной страницы */
+  }
+
+  .pagination-dark .page-item.active .page-link {
+    z-index: 1;
+    color: #ffffff; /* Цвет текста активной страницы */
+    background-color: #343a40; /* Цвет фона активной страницы */
+    border-color: #343a40; /* Цвет границы активной страницы */
+  }
+
+  .pagination-dark .page-link:hover {
+    color: #ffffff; /* Цвет текста ссылок при наведении */
+    background-color: #555b60; /* Цвет фона ссылок при наведении */
+    border-color: #555b60; /* Цвет границы ссылок при наведении */
+  }
+</style>
+
+<nav aria-label="...">
+  <ul class="pagination pagination-dark">
+    {% if page.has_previous %}
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page.previous_page_number }}">Артқа</a>
+    </li>
+    <li class="page-item"><a class="page-link" href="?page={{ page.previous_page_number }}">{{ page.previous_page_number }}</a></li>
+    {% endif %}
+    <li class="page-item active" aria-current="page">
+      <a class="page-link" href="#">{{ page.number }}</a>
+    </li>
+    {% if page.has_next %}
+    <li class="page-item"><a class="page-link" href="?page={{ page.next_page_number }}">{{ page.next_page_number }}</a></li>
+    <li class="page-item">
+      <a class="page-link" href="?page={{ page.next_page_number }}">Келесі</a>
+    </li>
+    {% endif %}
+
+  </ul>
+</nav>

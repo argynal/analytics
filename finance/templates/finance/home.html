@@ -1,0 +1,135 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Главное меню{% endblock %}
+{% block content %}
+
+<div class="row">
+  <form id="filterForm">
+    <label for="year">Выберите дату:</label>
+    <select name="year" id="year"></select>
+    <input type="submit" value="Загрузить" name="_load">
+  </form>
+
+  <div class="col-md-6">
+    <h2>Продажи по дням</h2>
+    <canvas id="myBills"></canvas>
+  </div>
+  <div class="col-md-6">
+    <div><h2>Количество продаж по позициям</h2></div>
+    <canvas id="myPieChart" width="800" height="400" margin-left: 0></canvas>
+  </div>
+
+  <div class="col-md-6">
+    <h2>Топ 3 товара по продажам </h2>
+    <div id="topSalesContainer"></div>
+  </div>
+  <div class="card" style="width: 18rem;">
+    <div class="card-header">
+      Топ 3 товара по продажам
+    </div>
+    <ul class="list-group list-group-flush">
+      <li class="list-group-item">An item</li>
+      <li class="list-group-item">A second item</li>
+      <li class="list-group-item">A third item</li>
+    </ul>
+  </div>
+</div>
+
+
+<script>
+  const ctx = document.getElementById('myBills').getContext('2d');
+   new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels: [{%for bill in bills%}'{{bill.date}}',{%endfor%}],
+      datasets: [{
+        label: 'Продажы по дням',
+        data: [{%for bill in bills%}'{{bill.sum}}',{%endfor%}],
+        borderWidth: 1,
+        backgroundColor: '#000000',
+        borderColor: '#000000',
+        pointRadius: 3,
+      }]
+    },
+    options: {
+      scales: {
+        y: {
+          beginAtZero: true
+        }
+      }
+    }
+  });
+
+      fetch('/finance/get_grouped_data/')
+        .then(response => response.json())
+        .then(data => {
+            var groupedData = data
+                // Создайте массивы для данных диаграммы
+    var labels = [];
+    var quantity = [];
+    var backgroundColors = [];
+
+    // Заполните массивы данными
+    groupedData.forEach(function(item) {
+        labels.push(item.position);
+        quantity.push(item.total_quantity);
+    });
+
+    // Данные для круговой диаграммы
+    var pieData = {
+        labels: labels,
+        datasets: [{
+            label: 'Количество продаж',
+            data: quantity
+        }]
+    };
+
+    // Конфигурация для круговой диаграммы
+    var options = {
+        responsive: false,
+        maintainAspectRatio: true
+    };
+
+    // Получите контекст canvas и создайте круговую диаграмму
+    var ctx1 = document.getElementById('myPieChart').getContext('2d');
+    var myPieChart = new Chart(ctx1, {
+        type: 'doughnut',
+        data: pieData,
+        options: options
+    });
+            console.log(groupedData);
+        })
+        .catch(error => console.error('Ошибка при получении данных:', error));
+
+     var myVariable;
+
+
+fetch('/finance/get_top_3/')
+            .then(response => response.json())
+            .then(data => {
+                // Assuming data is an array of top sales
+                displayTopSales(data);
+            })
+            .catch(error => console.error('Ошибка при получении данных:', error));
+
+        function displayTopSales(topSales) {
+            // Assuming topSales is an array with the top sales data
+
+            // Get the container element
+            const container = document.getElementById('topSalesContainer');
+
+            // Create an unordered list element
+            const list = document.createElement('ul');
+
+            // Loop through the top sales data and create list items
+            topSales.forEach((sale, index) => {
+                const listItem = document.createElement('li');
+                listItem.textContent = `${index + 1}. ${sale.position}: ${sale.total_quantity} продаж`;
+                list.appendChild(listItem);
+            });
+
+            // Append the list to the container
+            container.appendChild(list);
+        }
+</script>
+{% endblock %}

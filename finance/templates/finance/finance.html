@@ -1,0 +1,184 @@
+{% extends 'finance/base.html' %}
+
+{% block title %}Финансы{% endblock %}
+{% block content %}
+
+ <div class="container mt-4">
+        <div id="salesData">
+        <div class="row">
+        <div class="col-6 col-md-4">
+        <div class="card">
+          <div class="card-body" >
+            <h5>Продажи сегодня</h5>
+            <h4 class="card-title"><p id="dailySales"></p></h4>
+            <h6 class="card-subtitle mb-2 text-body-secondary"><p id="dailyChange" style="color:"></p></h6>
+          </div>
+        </div>
+        </div>
+        <div class="col-6 col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5>Продажи в этом месяце</h5>
+            <h4 class="card-title"><p id="monthlySales"></p></h4>
+            <h6 class="card-subtitle mb-2 text-body-secondary"><p id="monthlyChange" style="color:"></p></h6>
+          </div>
+        </div>
+        </div>
+        <div class="col-6 col-md-4">
+        <div class="card">
+          <div class="card-body">
+            <h5>Продажи в этом году</h5>
+            <h4 class="card-title"><p id="yearlySales"></p></h4>
+            <h6 class="card-subtitle mb-2 text-body-secondary"><p id="yearlyChange" style="color:"></p></h6>
+          </div>
+        </div>
+        </div>
+    </div>
+    </div>
+     <div class="container mt-4">
+     <form id="filterForm" class="d-flex">
+         <label for="year">Выбери год:</label>
+         <select class="form-select" aria-label="Default select example" name="year" id="year" style="width: 10rem;"></select>
+         <input type="submit" value="Загрузить" name="_load" class="btn btn-primary ms-2">
+     </form>
+    </div>
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Продажи по месяцам</h2>
+          <canvas id="salesChart"></canvas>
+      </div>
+
+      <div class="col-md-6">
+               <h2>Продажи по дням недели</h2>
+         <canvas id="salesDayChart"></canvas>
+      </div>
+
+
+
+
+<script>
+ let salesCtx = document.getElementById("salesChart").getContext("2d");
+        let salesChart = new Chart(salesCtx, {
+          type: "bar",
+          options: {
+            responsive: true,
+            title: {
+              display: false,
+              text: ""
+            }
+          }
+        });
+  let salesDayCtx = document.getElementById("salesDayChart").getContext("2d");
+        let salesDayChart = new Chart(salesDayCtx, {
+          type: "bar",
+          options: {
+                  tooltips: {
+            callbacks: {
+                label: function(context) {
+                        let label = context.dataset.label || '';
+
+                        if (label) {
+                            label += ': ';
+                        }
+                        if (context.parsed.y !== null) {
+                            label += new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(context.parsed.y);
+                        }
+                        return label;
+                }
+            }
+        },
+            responsive: true,
+            title: {
+              display: false,
+              text: ""
+            }
+          }
+        });
+</script>
+        </div>
+   <script>
+  $(document).ready(function() {
+    $.ajax({
+      url: "/finance/chart/filter-options/",
+      type: "GET",
+      dataType: "json",
+      success: (jsonResponse) => {
+        // Load all the options
+        jsonResponse.options.forEach(option => {
+          $("#year").append(new Option(option, option));
+        });
+        // Load data for the first option
+        loadAllCharts($("#year").children().first().val());
+      },
+      error: () => console.log("Failed to fetch chart filter options!")
+    });
+  });
+
+  $("#filterForm").on("submit", (event) => {
+    event.preventDefault();
+
+    const year = $("#year").val();
+    loadAllCharts(year)
+  });
+
+  function loadChart(chart, endpoint) {
+    $.ajax({
+      url: endpoint,
+      type: "GET",
+      dataType: "json",
+      success: (jsonResponse) => {
+        // Extract data from the response
+        const title = jsonResponse.title;
+        const labels = jsonResponse.data.labels;
+        const datasets = jsonResponse.data.datasets;
+
+        // Reset the current chart
+        chart.data.datasets = [];
+        chart.data.labels = [];
+
+        // Load new data into the chart
+        chart.options.title.text = title;
+        chart.options.title.display = true;
+        chart.data.labels = labels;
+        datasets.forEach(dataset => {
+          chart.data.datasets.push(dataset);
+        });
+        chart.update();
+      },
+      error: () => console.log("Failed to fetch chart data from " + endpoint + "!")
+    });
+  }
+
+  function loadAllCharts(year) {
+    loadChart(salesChart, `/finance/chart/sales/${year}/`);
+    loadChart(salesDayChart, `/finance/chart/sales_days/${year}/`);
+  }
+</script>
+       <script>
+
+       function formatNumberWithCurrency(number) {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'KZT' }).format(number);
+        }
+        fetch('/finance/chart/get_card_information/')
+            .then(response => response.json())
+            .then(data => {
+                // Display data on the page
+
+                document.getElementById('dailySales').innerText = formatNumberWithCurrency(data.daily_sales);
+                document.getElementById('monthlySales').innerText = formatNumberWithCurrency(data.monthly_sales);
+                document.getElementById('yearlySales').innerText = formatNumberWithCurrency(data.yearly_sales);
+
+                document.getElementById('dailyChange').innerText = `В сравнении с прошлым: ${data.daily_change}%`;
+                document.getElementById('dailyChange').style.color = data.daily_change_color;
+
+                document.getElementById('monthlyChange').innerText = `В сравнении с прошлым: ${data.monthly_change}%`;
+                document.getElementById('monthlyChange').style.color = data.monthly_change_color;
+
+                document.getElementById('yearlyChange').innerText = `В сравнении с прошлым: ${data.yearly_change}%`;
+                document.getElementById('yearlyChange').style.color = data.yearly_change_color;
+            })
+            .catch(error => console.error('Error:', error));
+    </script>
+
+
+{% endblock %}
